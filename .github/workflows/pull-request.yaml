@@ -1,0 +1,15 @@
+name: Pull Request
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build
+    uses: containifyci/.github/.github/workflows/engine-ci.yml@v1
+    secrets: inherit
+    with:
+      containify_repo: containifyci/engine-java
+      engine_command: engine-java

@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.github/**'
+
+jobs:
+  build:
+    uses: containifyci/.github/.github/workflows/engine-ci.yml@v1
+    secrets: inherit
+    with:
+      dockerhub_user: containifyci
+      containify_repo: containifyci/engine-java
+      engine_command: engine-java
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Get Next Version
+        id: semver
+        uses: ietf-tools/semver-action@v1
+        with:
+          token: ${{ secrets.RELEASE_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          branch: main
+          noVersionBumpBehavior: silent
+          noNewCommitBehavior: ${{ inputs.noNewCommitBehavior }}
+          skipInvalidTags: true
+          maxTagsToFetch: 50
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        if: steps.semver.outputs.next
+        with:
+          allowUpdates: true
+          # draft: true
+          generateReleaseNotes: true
+          makeLatest: true
+          tag: ${{ steps.semver.outputs.next }}
+          token: ${{ secrets.RELEASE_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
